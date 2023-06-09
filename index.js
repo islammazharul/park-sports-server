@@ -89,6 +89,30 @@ async function run() {
             res.send(result)
         })
 
+        app.patch("/sports/approved/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updateStatus = {
+                $set: {
+                    status: "approved"
+                }
+            }
+            const result = await sportsCollection.updateOne(filter, updateStatus)
+            res.send(result)
+        })
+
+        app.patch("/sports/denied/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updateStatus = {
+                $set: {
+                    status: "deny"
+                }
+            }
+            const result = await sportsCollection.updateOne(filter, updateStatus)
+            res.send(result)
+        })
+
         // user related apis
         app.get("/users", async (req, res) => {
             const result = await usersCollection.find().toArray()
