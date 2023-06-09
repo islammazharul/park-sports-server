@@ -73,13 +73,11 @@ async function run() {
         // sports related api
         app.get("/sports", async (req, res) => {
             const result = await sportsCollection.find().toArray();
-            // console.log("sports", result);
             res.send(result)
         })
 
         app.get("/myClasses/:email", async (req, res) => {
             const email = req.params?.email;
-            // const query = { email: email }
             const result = await sportsCollection.find({ email }).toArray()
             res.send(result)
         })
@@ -105,6 +103,16 @@ async function run() {
                 return res.send({ message: "User already exist" })
             }
             const result = await usersCollection.insertOne(user);
+            res.send(result)
+        })
+
+        app.get("/users/admin/:email", async (req, res) => {
+            const email = req.params.email;
+            if (req.decoded.email !== email) {
+                res.send({ admin: false })
+            }
+            const query = { email: email }
+            const result = await usersCollection.findOne(query)
             res.send(result)
         })
 
