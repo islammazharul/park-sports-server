@@ -113,6 +113,20 @@ async function run() {
             res.send(result)
         })
 
+        app.patch("/sports/feedback/:id", async (req, res) => {
+            const id = req.params.id;
+            const body = req.body
+            // console.log("body", body);
+            const filter = { _id: new ObjectId(id) }
+            const updateFeedback = {
+                $set: {
+                    feedback: body.message
+                }
+            }
+            const result = await sportsCollection.updateOne(filter, updateFeedback)
+            res.send(result)
+        })
+
         // user related apis
         app.get("/users", async (req, res) => {
             const result = await usersCollection.find().toArray()
