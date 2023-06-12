@@ -91,26 +91,26 @@ async function run() {
             res.send(result)
         })
 
+        app.get("/popularClass", async (req, res) => {
+            const result = await sportsCollection.find().sort({ total_enroll: -1 }).limit(6).toArray()
+            res.send(result)
+        })
+
         app.get("/myClasses/:email", verifyJWT, verifyInstructor, async (req, res) => {
             const email = req.params?.email;
             const result = await sportsCollection.find({ email }).toArray()
             res.send(result)
         })
 
-        // app.get("/sports/:text", async (req, res) => {
-        //     console.log(req.query?.text);
-        //     if (req.params.text === "approved") {
-        //         const result = await sportsCollection.find({
-        //             status: req.params.text
-        //         }).toArray()
-        //         console.log(result);
-        //         res.send(result)
-        //     }
-        // })
+        app.get("/allClasses", async (req, res) => {
+            const filter = { status: "approved" }
+            const result = await sportsCollection.find(filter).toArray()
+            console.log(result);
+            res.send(result)
+        })
 
         app.post("/sports", async (req, res) => {
             const sport = req.body;
-            // console.log("sport", sport);
             const result = await sportsCollection.insertOne(sport);
             res.send(result)
         })
@@ -279,6 +279,28 @@ async function run() {
         })
 
         // payment related apis
+
+        app.get("/myEnrollClass", verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            if (!email) {
+                return res.send([])
+            }
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(401).send({ error: true, message: "forbidden access" })
+            }
+            const filter = { email: email }
+            const result = await paymentCollection.find(filter).sort({ date: -1 }).toArray()
+            res.send(result)
+        })
+
+        app.delete("/myEnrollClass/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const result = await paymentCollection.deleteOne(filter)
+            res.send(result)
+        })
+
         app.post("/payments", verifyJWT, async (req, res) => {
             const payment = req.body;
             console.log("payment", payment);
