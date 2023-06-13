@@ -19,9 +19,11 @@ const verifyJWT = (req, res, next) => {
     }
     // bearer token
     const token = authorization.split(' ')[1];
+    // console.log(token);
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        console.log(err);
         if (err) {
-            return res.status(401).send({ error: true, message: "unauthorized access" })
+            return res.status(403).send({ error: true, message: "forbidden access" })
         }
         req.decoded = decoded;
         next()
@@ -60,7 +62,8 @@ async function run() {
         app.post("/jwt", (req, res) => {
             const user = req.body;
             // console.log("user", user);
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '24h' })
+            console.log(token);
             res.send({ token })
         })
 
@@ -105,7 +108,7 @@ async function run() {
         app.get("/allClasses", async (req, res) => {
             const filter = { status: "approved" }
             const result = await sportsCollection.find(filter).toArray()
-            console.log(result);
+            // console.log(result);
             res.send(result)
         })
 
@@ -154,7 +157,7 @@ async function run() {
         })
 
         // user related apis
-        app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
+        app.get("/users", verifyJWT, verifyInstructor, verifyAdmin, async (req, res) => {
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
@@ -218,6 +221,19 @@ async function run() {
             res.send(result)
         })
 
+        app.get("/popularInstructor", async (req, res) => {
+            const filter = { role: "instructor" }
+            const result = await usersCollection.find(filter).limit(6).toArray()
+            // console.log(result);
+            res.send(result)
+        })
+        app.get("/allInstructor", async (req, res) => {
+            const filter = { role: "instructor" }
+            const result = await usersCollection.find(filter).toArray()
+            // console.log(result);
+            res.send(result)
+        })
+
         app.patch("/user/instructor/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
@@ -235,13 +251,15 @@ async function run() {
         // selected class related apis
         app.get("/select", verifyJWT, async (req, res) => {
             const email = req.query?.email;
+            console.log(email);
             if (!email) {
                 return res.send([])
             }
-            const decodedEmail = req.decoded.email;
+            const decodedEmail = req?.decoded?.email;
             if (email !== decodedEmail) {
                 return res.status(401).send({ error: true, message: "forbidden access" })
             }
+            console.log(decodedEmail);
             const query = { email: email }
             const result = await selectClassCollection.find(query).toArray();
             res.send(result)
@@ -249,8 +267,8 @@ async function run() {
 
         app.post("/select", async (req, res) => {
             const body = req.body;
-            console.log(body);
             const result = await selectClassCollection.insertOne(body)
+            // console.log(result);
             res.send(result)
         })
 
