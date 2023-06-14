@@ -8,7 +8,15 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors())
+// app.use(cors())
+app.use(
+    cors({
+        origin: "*",
+        methods: "GET,POST,PATCH,PUT,DELETE",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+    })
+);
 app.use(express.json());
 
 const verifyJWT = (req, res, next) => {
@@ -48,7 +56,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const sportsCollection = client.db("sportsDB").collection("sports");
         const usersCollection = client.db("sportsDB").collection("users");
@@ -72,8 +80,9 @@ async function run() {
             const email = req.decoded.email;
             const query = { email: email }
             const user = await usersCollection.findOne(query);
+            console.log("user", user);
             if (user?.role !== 'admin') {
-                return res.status(403).send({ error: true, message: 'forbidden message' })
+                return res.status(200).send({ error: true, message: 'forbidden message' })
             }
             next()
         }
@@ -82,8 +91,9 @@ async function run() {
             const email = req.decoded.email;
             const query = { email: email }
             const user = await usersCollection.findOne(query);
+            console.log("instructor", user);
             if (user?.role !== 'instructor') {
-                return res.status(403).send({ error: true, message: 'forbidden message' })
+                return res.status(200).send({ error: true, message: 'forbidden message' })
             }
             next()
         }
@@ -95,7 +105,8 @@ async function run() {
         })
 
         app.get("/popularClass", async (req, res) => {
-            const result = await sportsCollection.find().sort({ total_enroll: -1 }).limit(6).toArray()
+            const filter = { status: "approved" }
+            const result = await sportsCollection.find(filter).sort({ total_enroll: -1 }).limit(6).toArray()
             res.send(result)
         })
 
@@ -157,7 +168,7 @@ async function run() {
         })
 
         // user related apis
-        app.get("/users", verifyJWT, verifyInstructor, verifyAdmin, async (req, res) => {
+        app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
